@@ -14,13 +14,15 @@ export default defineConfig(async () => {
   let cert: Buffer<ArrayBufferLike> | string | undefined = undefined;
   let key: Buffer<ArrayBufferLike> | string | undefined = undefined;
   let configFile = envs.getConfigFile();
+  let loadedConfig: any | undefined = undefined;
 
   try {
-    const { config } = await import(configFile);
+  const { config } = await import(configFile);
 
-    host = config.domain;
-    cert = readTls(config.http.tls?.cert);
-    key = readTls(config.http.tls?.key);
+  loadedConfig = config;
+  host = config.domain;
+  cert = readTls(config.http.tls?.cert);
+  key = readTls(config.http.tls?.key);
   } catch (error) {
     console.warn('Failed to read config file %o:', configFile, error);
 
@@ -63,6 +65,8 @@ export default defineConfig(async () => {
       _throttleSecret: 'foo',
       info: true,
       stats: false,
+      // Pass the server listen port so the frontend connects to the right WS port.
+      protooPort: (loadedConfig?.http?.listenPort as number) || 4443,
     };
 
     const defaultProducer = {
